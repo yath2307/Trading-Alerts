@@ -2,7 +2,7 @@ from twilio.rest import Client
 
 def send_message(stockName,buy):
     account_sid = 'AC51d373f200999f320cfd35b123b73c97'
-    auth_token = '0b6642e037beea7ba8058335740a50cd'
+    auth_token = 'e4bcb7310d4209e1cdcde2b8bc65114d'
     client = Client(account_sid, auth_token)
     if buy==True:
         body='Buy signal for stock '+stockName+' according to MACD crossings'
