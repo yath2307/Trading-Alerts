@@ -13,6 +13,14 @@ def stopTracking():
     fetching_data.stop()
     return 'stopped tracking stocks'
 
+@app.route('/get/purchased')
+def getPurchased():
+    return ' '.join([str(elem) for elem in fetching_data.purchasedStocksList])
+
+@app.route('/get/toBePurchased')
+def getToBePurchased():
+    return ' '.join([str(elem) for elem in fetching_data.toBePurchasedStocksList])
+
 @app.route('/add/toBePurchased/<symbol>')
 def addToBePurchasedStocks(symbol):
     fetching_data.toBePurchasedStocksList.append(symbol)
