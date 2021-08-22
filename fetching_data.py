@@ -1,4 +1,5 @@
 import sys
+import threading
 import time
 from datetime import date
 
@@ -12,7 +13,16 @@ purchasedStocksList = ["HAL"]
 toBePurchasedStocksList = []
 
 breakit = False
+def background(f):
+    '''
+    a threading decorator
+    use @background above the function you want to run in the background
+    '''
+    def backgrnd_func(*a, **kw):
+        threading.Thread(target=f, args=a, kwargs=kw).start()
+    return backgrnd_func
 
+@background
 def start():
     while True:
         for stock in purchasedStocksList:
@@ -39,7 +49,6 @@ def start():
                 latest_values = response.json()['Technical Analysis: MACD']['2021-08-20']
                 print(latest_values)
                 if latest_values['MACD'] >= latest_values['MACD_Signal']:
-                    print('condition aagyi')
                     whatsapp_notify.send_message(stockName=stock, buy=True)
                     mail_notify.send_mail(stockName=stock, buy=True)
             except Exception as e:

@@ -1,3 +1,4 @@
+
 from flask import Flask
 import fetching_data
 app = Flask(__name__)
@@ -15,23 +16,23 @@ def stopTracking():
 @app.route('/add/toBePurchased/<symbol>')
 def addToBePurchasedStocks(symbol):
     fetching_data.toBePurchasedStocksList.append(symbol)
-    return 'Added Stock '+symbol+' to the list '+fetching_data.toBePurchasedStocksList
+    return 'Added Stock '+symbol+' to the list '
 
 @app.route('/remove/toBePurchased/<symbol>')
 def removeToBePurchasedStocks(symbol):
     fetching_data.toBePurchasedStocksList.remove(symbol)
-    return 'Removed Stock '+symbol+' from the list '+fetching_data.toBePurchasedStocksList
+    return 'Removed Stock '+symbol+' from the list '
 
 
 @app.route('/add/purchased/<symbol>')
 def addPurchasedStocks(symbol):
     fetching_data.purchasedStocksList.append(symbol)
-    return 'Added Stock '+symbol+' to the list '+fetching_data.purchasedStocksList
+    return 'Added Stock '+symbol+' to the list '
 
 @app.route('/remove/purchased/<symbol>')
 def removePurchasedStocks(symbol):
     fetching_data.purchasedStocksList.append(symbol)
-    return 'Removed Stock '+symbol+' from the list '+fetching_data.purchasedStocksList
+    return 'Removed Stock '+symbol+' from the list '
 
 if __name__ == '__main__':
      app.run(port='5002')
