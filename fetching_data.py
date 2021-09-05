@@ -1,4 +1,3 @@
-import sys
 import threading
 import time
 import datetime
@@ -33,12 +32,10 @@ def start():
         i = 0
         for stock in stocks:
             if alertMapping[i] == 0:
-                print(stock)
                 hour = datetime.datetime.now(IST).hour
                 alertMapping[i] = (24+9-hour)
                 fastMacd = nse_tools.calFastMACD(stock)
                 slowMacd = nse_tools.calSlowMACD(stock)
-                print(fastMacd, slowMacd)
                 if fastMacd is None or slowMacd is None:
                     continue
                 fastMacd = pd.Series(fastMacd)
@@ -52,7 +49,6 @@ def start():
                     signal1 = diff[0] <= 0
                     signal2 = (diff[0] < diff[1] < diff[2])
                     signal3 = ((max(data) - data[0])/data[0])*100 <= 2
-                    print(signal1, signal2, signal3)
                     if (signal1 or signal2) and signal3:
                         print('sell me andar aagye')
                         whatsapp_notify.send_message(stockName=stocks[stock], buy=False)
@@ -64,8 +60,8 @@ def start():
                     signal2 = (diff[0] > diff[1] > diff[2])
                     signal3 = ((max(data) - data[0]) / data[0]) * 100 >= 10
                     reco = nse_tools.getTickerTapeRecos(stock)
-                    signal4 = True
-                    if reco is not None and reco['data'] is not None and reco['data']['percBuyReco'] is not None and reco['data']["totalReco"]:
+                    signal4 = False
+                    if reco is not None and reco['data'] is not None and reco['data']['percBuyReco'] is not None and reco['data']["totalReco"] is not None:
                         signal4 = reco['data']['percBuyReco'] >= 70
                     if (signal1 or signal2) and signal3 and signal4:
                         print('buy me andar aagye')
@@ -77,7 +73,7 @@ def start():
             i += 1
         global breakit
         if breakit:
-            sys.exit()
+            time.sleep(3600*24*7)
         time.sleep(3600)
 def stop():
     global breakit
