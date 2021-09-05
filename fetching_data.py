@@ -1,16 +1,21 @@
 import sys
 import threading
 import time
-from datetime import date
-
+import datetime
+import nse_tools
 import whatsapp_notify
 import mail_notify
+import pandas as pd
+import pytz
 
-import requests
+stocks = nse_tools.getAllStocksSymbols()
 
-purchasedStocksList = ["HAL"]
+alertMapping = []
 
-toBePurchasedStocksList = []
+IST = pytz.timezone('Asia/Kolkata')
+
+for stock in stocks:
+    alertMapping.append(0)
 
 breakit = False
 def background(f):
@@ -25,34 +30,51 @@ def background(f):
 @background
 def start():
     while True:
-        for stock in purchasedStocksList:
-            print(stock)
-            api_url = "https://www.alphavantage.co/query?function=MACD&symbol=" + stock + "&interval=daily&series_type=open&apikey=X51X1JMMQJUWY4SZ"
-            response = requests.get(api_url)
-            today = date.today()
-            d1 = "20" + today.strftime("%y-%m-%d")
-            try:
-                latest_values = response.json()['Technical Analysis: MACD']['2021-08-20']
-                print(latest_values)
-                if latest_values['MACD'] <= latest_values['MACD_Signal']:
-                    whatsapp_notify.send_message(stockName=stock, buy=False)
-                    mail_notify.send_mail(stockName=stock, buy=False)
-            except Exception as e:
-                print("error aagyi yaar :-( Shayad aaj market band hai ", e)
-        for stock in toBePurchasedStocksList:
-            print(stock)
-            api_url = "https://www.alphavantage.co/query?function=MACD&symbol=" + stock + "&interval=daily&series_type=open&apikey=X51X1JMMQJUWY4SZ"
-            response = requests.get(api_url)
-            today = date.today()
-            d1 = "20" + today.strftime("%y-%m-%d")
-            try:
-                latest_values = response.json()['Technical Analysis: MACD']['2021-08-20']
-                print(latest_values)
-                if latest_values['MACD'] >= latest_values['MACD_Signal']:
-                    whatsapp_notify.send_message(stockName=stock, buy=True)
-                    mail_notify.send_mail(stockName=stock, buy=True)
-            except Exception as e:
-                print("error aagyi yaar :-( Shayad aaj market band hai ", e)
+        i = 0
+        for stock in stocks:
+            if alertMapping[i] == 0:
+                print(stock)
+                hour = datetime.datetime.now(IST).hour
+                alertMapping[i] = (24+9-hour)
+                fastMacd = nse_tools.calFastMACD(stock)
+                slowMacd = nse_tools.calSlowMACD(stock)
+                print(fastMacd, slowMacd)
+                if fastMacd is None or slowMacd is None:
+                    continue
+                fastMacd = pd.Series(fastMacd)
+                fastMacd = fastMacd[0:len(fastMacd) - 8]
+                slowMacd = pd.Series(slowMacd)
+                diff = fastMacd - slowMacd
+                diff = diff.tolist()
+                data = nse_tools.getHistoricalData(stock, 180)
+                data.reverse()
+                try:
+                    signal1 = diff[0] <= 0
+                    signal2 = (diff[0] < diff[1] < diff[2])
+                    signal3 = ((max(data) - data[0])/data[0])*100 <= 2
+                    print(signal1, signal2, signal3)
+                    if (signal1 or signal2) and signal3:
+                        print('sell me andar aagye')
+                        whatsapp_notify.send_message(stockName=stocks[stock], buy=False)
+                        mail_notify.send_mail(stockName=stocks[stock], buy=False)
+                except Exception as e:
+                    print("sell wale me error aagyi yaar :-( ", e)
+                try:
+                    signal1 = diff[0] >= 0
+                    signal2 = (diff[0] > diff[1] > diff[2])
+                    signal3 = ((max(data) - data[0]) / data[0]) * 100 >= 10
+                    reco = nse_tools.getTickerTapeRecos(stock)
+                    signal4 = True
+                    if reco is not None and reco['data'] is not None and reco['data']['percBuyReco'] is not None and reco['data']["totalReco"]:
+                        signal4 = reco['data']['percBuyReco'] >= 70
+                    if (signal1 or signal2) and signal3 and signal4:
+                        print('buy me andar aagye')
+                        whatsapp_notify.send_message(stockName=stock, buy=True, reco=reco['data'])
+                        mail_notify.send_mail(stockName=stock, buy=True, reco=reco['data'])
+                except Exception as e:
+                    print("buy wale me error aagyi yaar :-( ", e)
+            alertMapping[i] -= 1
+            i += 1
         global breakit
         if breakit:
             sys.exit()
