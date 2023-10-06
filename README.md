@@ -1,1 +1,3 @@
 # Trading-Alerts
+It was created to get an initial list of filtered stocks which are in a good position and then evaluated further manually.
+Gets all the stocks list and current price from NSE APIs. For all the stocks it then fetched the recommendation score from TradingView public APIs and for all the stocks which cross a certain threshold, last 3 months data is fetched and MACD along with moving average is calcuated. Using these metrics the stocks are filtered out and then a whatsapp message is sent using Twilio listing all such stocks. Emails are also sent out for the provided email ids. We can then study these stocks and make a decision.
